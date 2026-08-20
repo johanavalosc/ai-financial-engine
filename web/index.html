@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nautilus - Dashboard de Gastos</title>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Archivo de estilos principal -->
+    <link rel="stylesheet" href="styles.css?v=20260816_v205">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-container">
+        <!-- Animated Bubbles Background -->
+        <div class="bubbles-bg">
+            <div class="bubble bubble-1"></div>
+            <div class="bubble bubble-2"></div>
+            <div class="bubble bubble-3"></div>
+            <div class="bubble bubble-4"></div>
+            <div class="bubble bubble-5"></div>
+            <div class="bubble bubble-6"></div>
+            <div class="bubble bubble-7"></div>
+            <div class="bubble bubble-8"></div>
+        </div>
+        <div class="login-box">
+            <div class="login-logo">
+                <img src="logo.png" alt="Nautilus" class="logo-img login-logo-img">
+                <h2>NAUTILUS</h2>
+            </div>
+            <p class="login-subtitle">Inicia sesión en tu cuenta corporativa</p>
+            <form id="login-form">
+                <div class="input-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="email" required placeholder="ejemplo@empresa.com">
+                </div>
+                <div class="input-group">
+                    <label>Contraseña</label>
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <input type="password" id="password" required placeholder="••••••••" style="width: 100%; padding-right: 40px;">
+                        <button type="button" id="toggle-password" class="icon-btn" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: var(--gray-500);">
+                            <i data-lucide="eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div style="text-align: right; margin-top: -6px; margin-bottom: 16px;">
+                    <a href="#" id="forgot-password-link" style="color: var(--gray-400); font-size: 13px; text-decoration: none;">¿Olvidaste tu contraseña?</a>
+                </div>
+                <div id="login-error" class="error-msg"></div>
+                <button type="submit" class="btn-primary" id="login-btn">Acceder al Dashboard</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Application -->
+    <div id="app-container" class="app-layout hidden">
+        
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="logo.png" alt="Nautilus" class="logo-img sidebar-logo-img">
+                <span class="logo-text">NAUTILUS</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-view="dashboard">
+                    <i data-lucide="layout-dashboard"></i> Dashboard
+                </a>
+                <a href="#" class="nav-item" data-view="facturas">
+                    <i data-lucide="file-text"></i> Historial Facturas
+                </a>
+                <a href="#" class="nav-item" data-view="proveedores">
+                    <i data-lucide="users"></i> Proveedores
+                </a>
+                <a href="#" class="nav-item" data-view="precios">
+                    <i data-lucide="trending-up"></i> Historial Precios
+                </a>
+                <a href="#" class="nav-item" data-view="reportes">
+                    <i data-lucide="bar-chart-2"></i> Reportes
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="#" id="btn-open-links-modal" class="nav-item">
+                    <i data-lucide="key"></i> Generar Links
+                </a>
+                <a href="#" id="logout-btn" class="nav-item">
+                    <i data-lucide="log-out"></i> Cerrar Sesión
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            
+            <!-- Topbar -->
+            <header class="topbar">
+                <div class="company-info">
+                    <h1 id="company-name">Cargando empresa...</h1>
+                </div>
+                <div class="month-selector">
+                    <button class="icon-btn" id="prev-month"><i data-lucide="chevron-left"></i></button>
+                    <span id="current-month-display">Mes Actual</span>
+                    <button class="icon-btn" id="next-month"><i data-lucide="chevron-right"></i></button>
+                </div>
+                <div class="user-profile">
+                    <div class="avatar">
+                        <i data-lucide="user"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard View -->
+            <div id="view-dashboard" class="view-section active">
+                
+                <!-- Bento Grid Row 1: 4 KPIs Delgados y Estilizados -->
+                <div class="bento-row kpi-row-slim" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+                    <!-- KPI 1: Gasto Total -->
+                    <div class="bento-card card-teal" style="min-height: 90px; padding: 0.9rem 1.25rem; display: flex; flex-direction: column; justify-content: center;">
+                        <div class="kpi-label" style="font-size: 0.8rem; margin-bottom: 0.15rem; opacity: 0.9;">Gasto del Mes</div>
+                        <div class="kpi-value-alt" id="kpi-gasto" style="font-size: 1.45rem; font-weight: 800; color: #FFFFFF; line-height: 1.1;">₡0.00</div>
+                        <div id="kpi-gasto-desc" style="font-size: 0.72rem; margin-top: 0.2rem; opacity: 0.85; line-height: 1.2;">
+                            Cargando comparativa...
+                        </div>
+                    </div>
+                    <!-- KPI 2: Facturas Procesadas -->
+                    <div class="bento-card card-purple" style="min-height: 90px; padding: 0.9rem 1.25rem; display: flex; flex-direction: column; justify-content: center;">
+                        <div class="kpi-label" style="font-size: 0.8rem; margin-bottom: 0.15rem; opacity: 0.9;">Facturas Procesadas</div>
+                        <div class="kpi-value-alt" id="kpi-procesadas" style="font-size: 1.45rem; font-weight: 800; color: #FFFFFF; line-height: 1.1;">0</div>
+                        <div id="kpi-procesadas-desc" style="font-size: 0.72rem; margin-top: 0.2rem; opacity: 0.85; line-height: 1.2;">
+                            Cargando comparativa...
+                        </div>
+                    </div>
+                    <!-- KPI 3: Facturas por Cancelar -->
+                    <div class="bento-card card-orange" style="min-height: 90px; padding: 0.9rem 1.25rem; display: flex; flex-direction: column; justify-content: center;">
+                        <div class="kpi-label" style="font-size: 0.8rem; margin-bottom: 0.15rem; opacity: 0.9;">Facturas por Cancelar</div>
+                        <div class="kpi-value-alt" id="kpi-pendientes-count" style="font-size: 1.45rem; font-weight: 800; color: #FFFFFF; line-height: 1.1;">0</div>
+                        <div id="kpi-pendientes-desc" style="font-size: 0.72rem; margin-top: 0.2rem; opacity: 0.85; line-height: 1.2;">
+                            Con saldo pendiente de pago.
+                        </div>
+                    </div>
+                    <!-- KPI 4: Principal Emisor (NUEVO 4TO KPI SUPERIOR) -->
+                    <div class="bento-card card-dark" style="min-height: 90px; padding: 0.9rem 1.25rem; display: flex; flex-direction: column; justify-content: center; background: #18181B; border: 1px solid rgba(255,255,255,0.08);">
+                        <div class="kpi-label" style="font-size: 0.8rem; margin-bottom: 0.15rem; opacity: 0.9; color: #A1A1AA;">Principal Emisor</div>
+                        <div class="kpi-value-alt" id="kpi-principal-emisor-nombre" style="font-size: 1.05rem; font-weight: 700; color: #38BDF8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">Cargando...</div>
+                        <div class="kpi-subtext" id="kpi-principal-emisor-monto" style="font-size: 0.75rem; margin-top: 0.2rem; color: #E4E4E7; font-weight: 600;">₡0.00 este mes</div>
+                    </div>
+                </div>
+
+                <!-- Bento Grid Row 2: Centro de Alertas & Flujo de Caja -->
+                <div class="bento-row intelligence-row" style="display: flex; gap: 1rem; margin-top: 1.25rem;">
+                    <!-- Tarjeta Izquierda: Centro de Alertas (ticker rotativo estilizado y compacto) -->
+                    <div class="bento-card card-glass" id="centro-alertas-widget" style="flex: 1; padding: 1.4rem 1.6rem; min-height: 200px; display: flex; flex-direction: column; justify-content: space-between; border-left: 4px solid var(--teal-dark); transition: border-color 0.6s ease, box-shadow 0.5s ease;">
+                        <!-- Header -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem; border-bottom: 1px solid var(--gray-200); padding-bottom: 0.65rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <div id="alerta-icon-bg" style="width: 28px; height: 28px; border-radius: 6px; background: rgba(13,110,110,0.1); display: flex; align-items: center; justify-content: center; transition: background 0.5s;">
+                                    <i data-lucide="bell" style="width: 16px; height: 16px; color: var(--teal-dark);"></i>
+                                </div>
+                                <h3 class="card-title-dark" style="margin: 0; font-size: 1.05rem;">Centro de Alertas</h3>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span id="alertas-contador" style="font-size: 0.72rem; font-weight: 700; background: rgba(13,110,110,0.1); color: var(--teal-dark); padding: 0.2rem 0.55rem; border-radius: 9999px;">0 alertas</span>
+                                <span style="font-size: 0.72rem; font-weight: 700; background: rgba(16,185,129,0.12); color: #059669; padding: 0.25rem 0.65rem; border-radius: 9999px; letter-spacing: 0.03em;">● EN VIVO</span>
+                            </div>
+                        </div>
+
+                        <!-- Área de display de la alerta activa -->
+                        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+                            <div id="alerta-display" style="opacity: 1; transition: opacity 0.4s ease;">
+                                <div style="display: flex; align-items: flex-start; gap: 0.85rem;">
+                                    <span id="alerta-emoji" style="font-size: 1.6rem; line-height: 1; flex-shrink: 0; margin-top: 0.1rem;">⏳</span>
+                                    <div>
+                                        <div id="alerta-mensaje" style="font-size: 0.9rem; color: var(--gray-800); line-height: 1.5; font-weight: 500;">Analizando tus finanzas...</div>
+                                        <div id="alerta-accion" style="font-size: 0.8rem; color: var(--gray-500); margin-top: 0.35rem; font-style: italic;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dots indicadores de posición -->
+                        <div id="alertas-dots" style="display: flex; gap: 0.4rem; justify-content: center; margin-top: 0.85rem; min-height: 10px;"></div>
+                    </div>
+
+                    <!-- Tarjeta Derecha: Flujo de Caja & Estado de Deuda -->
+                    <div class="bento-card card-white" style="flex: 1.4; padding: 1.4rem 1.6rem; min-height: 200px; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.65rem; border-bottom: 1px solid var(--gray-200); padding-bottom: 0.65rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <div style="width: 28px; height: 28px; border-radius: 6px; background: rgba(13, 110, 110, 0.1); display: flex; align-items: center; justify-content: center;">
+                                    <i data-lucide="wallet" style="width: 16px; height: 16px; color: var(--teal-dark);"></i>
+                                </div>
+                                <h3 class="card-title-dark" style="margin: 0; font-size: 1.05rem;">Flujo de Caja & Cobertura</h3>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 0.85rem; flex: 1; justify-content: center;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: var(--gray-50); padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid var(--gray-200);">
+                                <span style="font-size: 0.85rem; color: var(--gray-600); font-weight: 600;">Saldo Total Pendiente</span>
+                                <span id="card-saldo-total-pendiente" style="font-size: 1.15rem; font-weight: 800; color: var(--status-coral);">₡0,00</span>
+                            </div>
+
+
+                            <!-- Contador de Cobertura de Deuda (Monto Pagado / Deuda Total) con Barra Visual (0-100%) -->
+                            <div style="background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 12px; padding: 0.75rem 0.9rem;" id="container-deuda-progress">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                                    <span style="font-size: 0.78rem; font-weight: 700; color: var(--gray-700); text-transform: uppercase; letter-spacing: 0.03em;">Cobertura de Pago</span>
+                                    <span style="font-size: 0.85rem; font-weight: 800; color: #059669;" id="card-deuda-ratio-text">₡0,00 / ₡0,00</span>
+                                </div>
+                                <div style="width: 100%; height: 8px; background: #E2E8F0; border-radius: 9999px; overflow: hidden; margin-bottom: 0.4rem; position: relative;">
+                                    <div id="card-deuda-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #10B981, #059669); border-radius: 9999px; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; color: var(--gray-500);">
+                                    <span>Pagado: <strong id="card-deuda-monto-pagado" style="color: #059669;">₡0,00</strong></span>
+                                    <span>Pendiente: <strong id="card-deuda-monto-pendiente" style="color: #DC2626;">₡0,00</strong></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Bento Grid Row 3: Invoices Tabs -->
+                <div class="bento-row invoice-row">
+                    <div class="bento-card card-white full-width">
+                        <div class="tabs-header">
+                            <button class="tab-btn active" data-tab="pendientes">Pendientes (<span id="tab-count-pendientes">0</span>)</button>
+                            <button class="tab-btn" data-tab="canceladas">Canceladas</button>
+                        </div>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Factura</th>
+                                        <th>Proveedor</th>
+                                        <th>Fecha Emisión</th>
+                                        <th>Vencimiento</th>
+                                        <th class="text-right">Monto</th>
+                                        <th class="text-center">Estado</th>
+                                        <th class="text-center">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="invoices-table-body">
+                                    <!-- Inyectado por JS -->
+                                </tbody>
+                            </table>
+                            <div id="table-loading" class="loading hidden">Cargando facturas...</div>
+                            <div id="table-empty" class="empty-state hidden">No hay facturas para mostrar.</div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Otras Vistas -->
+            <!-- Vista Historial Facturas -->
+            <div id="view-facturas" class="view-section hidden">
+                <!-- Bento KPIs del Historial -->
+                <div class="bento-row kpi-row" style="margin-bottom: 1.5rem;">
+                    <!-- Facturas Totales -->
+                    <div class="bento-card card-charcoal" style="display: flex; flex-direction: column; justify-content: center; min-height: 100px; padding: 1.2rem 2rem; flex: 1;">
+                        <div class="kpi-label" style="margin-bottom: 0.25rem; font-size: 0.95rem; opacity: 0.85;">Facturas Totales</div>
+                        <div class="kpi-value-alt" id="kpi-hist-totales" style="font-size: 2.25rem; font-weight: 800; color: var(--white); line-height: 1.2;">0</div>
+                    </div>
+                    <!-- Facturas Pendientes -->
+                    <div class="bento-card card-amber" style="display: flex; flex-direction: column; justify-content: center; min-height: 100px; padding: 1.2rem 2rem; flex: 1;">
+                        <div class="kpi-label" style="margin-bottom: 0.25rem; font-size: 0.95rem; opacity: 0.85;">Facturas Pendientes</div>
+                        <div class="kpi-value-alt" id="kpi-hist-pendientes" style="font-size: 2.25rem; font-weight: 800; color: var(--white); line-height: 1.2;">0</div>
+                    </div>
+                    <!-- Total Por Pagar -->
+                    <div class="bento-card card-orange" style="display: flex; flex-direction: column; justify-content: center; min-height: 100px; padding: 1.2rem 2rem; flex: 1.2;">
+                        <div class="kpi-label" style="margin-bottom: 0.25rem; font-size: 0.95rem; opacity: 0.85;">Total por Pagar</div>
+                        <div class="kpi-value-alt" id="kpi-hist-monto-pendiente" style="font-size: 1.85rem; font-weight: 800; color: var(--white); line-height: 1.2;">₡0</div>
+                    </div>
+                    <!-- Total Pagado -->
+                    <div class="bento-card card-teal" style="display: flex; flex-direction: column; justify-content: center; min-height: 100px; padding: 1.2rem 2rem; flex: 1.2;">
+                        <div class="kpi-label" style="margin-bottom: 0.25rem; font-size: 0.95rem; opacity: 0.85;">Total Pagado</div>
+                        <div class="kpi-value-alt" id="kpi-hist-monto-pagado" style="font-size: 1.85rem; font-weight: 800; color: var(--white); line-height: 1.2;">₡0</div>
+                    </div>
+                </div>
+                
+                <div class="bento-row">
+                    <!-- Tarjeta de Filtros de Historial -->
+                    <div class="bento-card card-white full-width" style="min-height: 620px; display: flex; flex-direction: column;">
+                        <div class="filters-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <h2 class="card-title-dark">Historial de Facturas</h2>
+                                <div id="historial-ia-filter-badge" class="hidden"></div>
+                            </div>
+                            <div class="filters-controls" style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                                <div class="search-box">
+                                    <i data-lucide="search" class="search-icon"></i>
+                                    <input type="text" id="historial-search" placeholder="Buscar por emisor, número o monto..." class="filter-input">
+                                </div>
+                                <select id="historial-filter-periodo" class="filter-select">
+                                    <option value="TODOS">Todos los períodos</option>
+                                    <!-- Se llenará dinámicamente con JS -->
+                                </select>
+                                <input type="date" id="historial-filter-fecha-exacta" class="filter-select" title="Filtrar por día exacto de emisión" style="cursor: pointer; padding: 0.4rem 0.6rem;">
+                                <button type="button" id="btn-limpiar-filtros" title="Limpiar filtros" style="display: none; align-items: center; justify-content: center; padding: 0.45rem 0.6rem; border-radius: 8px; background: rgba(13,110,110,0.1); border: 1px solid rgba(13,110,110,0.2); cursor: pointer; color: var(--teal-dark); font-size: 0.75rem; font-weight: 600;">
+                                    Limpiar
+                                </button>
+                                <select id="historial-filter-estado" class="filter-select">
+                                    <option value="TODOS">Todos los estados</option>
+                                    <option value="PENDIENTE">Por cancelar (Pendientes)</option>
+                                    <option value="PAGADA">Canceladas (Pagadas)</option>
+                                </select>
+                                <select id="historial-filter-moneda" class="filter-select">
+                                    <option value="TODAS">Todas las monedas</option>
+                                    <option value="CRC">CRC (₡)</option>
+                                    <option value="USD">USD ($)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Tabla del Historial -->
+                        <div class="table-container" style="margin-top: 1.5rem; flex: 1; max-height: 480px;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Factura</th>
+                                        <th>Emisor</th>
+                                        <th>Fecha Emisión</th>
+                                        <th>Vencimiento</th>
+                                        <th class="text-right">Monto</th>
+                                        <th class="text-center">Estado</th>
+                                        <th class="text-center">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="historial-table-body">
+                                    <!-- Inyectado dinámicamente -->
+                                </tbody>
+                            </table>
+                            <div id="historial-loading" class="loading">Cargando historial de facturas...</div>
+                            <div id="historial-empty" class="empty-state hidden">No se encontraron facturas que coincidan con los filtros.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Vista Directorio de Proveedores -->
+            <div id="view-proveedores" class="view-section hidden">
+                <!-- Bento KPIs de Proveedores -->
+                <div class="bento-row kpi-row">
+                    <!-- Proveedores Activos -->
+                    <div class="bento-card card-teal" style="display: flex; flex-direction: column; justify-content: center; min-height: 120px; padding: 1.5rem 2rem;">
+                        <div id="kpi-green-global" style="display: flex; flex-direction: column; justify-content: center;">
+                            <div class="kpi-label" id="label-prov-activos" style="margin-bottom: 0.25rem;">Proveedores Activos</div>
+                            <div class="kpi-value-alt" id="kpi-prov-activos" style="font-size: 2.25rem; font-weight: 800; color: var(--white); line-height: 1.2;">0</div>
+                        </div>
+                        <div id="kpi-green-provider-info" class="hidden" style="margin-top: 0.25rem; margin-bottom: 0.25rem;">
+                            <div class="kpi-label" style="font-size: 0.75rem; text-transform: uppercase; opacity: 0.8; margin-bottom: 0.1rem;">Proveedor Seleccionado</div>
+                            <div id="kpi-selected-provider-name" style="font-size: 1.15rem; font-weight: 800; color: var(--white); line-height: 1.2; word-break: break-word;">N/A</div>
+                        </div>
+                        <div id="kpi-green-selected" class="hidden" style="border-top: 1px solid rgba(255,255,255,0.15); padding-top: 0.5rem; margin-top: 0.5rem; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <span class="kpi-label" style="font-size: 0.85rem; text-transform: uppercase; margin: 0; opacity: 0.95;">Facturas Emitidas</span>
+                            <span id="kpi-prov-facturas-seleccionadas" style="font-size: 1.5rem; font-weight: 800; color: var(--white); line-height: 1;">0</span>
+                        </div>
+                    </div>
+                    <!-- Mayor Gasto -->
+                    <div class="bento-card card-purple" style="display: flex; flex-direction: column; justify-content: center; min-height: 120px; padding: 1.5rem 2rem;">
+                        <div class="kpi-label" id="label-prov-mayor" style="margin-bottom: 0.25rem;">Mayor Emisor</div>
+                        <div class="kpi-value-alt" id="kpi-prov-mayor" style="font-size: 2.25rem; font-weight: 800; color: var(--white); line-height: 1.2; word-break: break-all;">N/A</div>
+                    </div>
+                    <!-- Gasto Promedio -->
+                    <div class="bento-card card-orange" style="display: flex; flex-direction: column; justify-content: center; min-height: 120px; padding: 1.5rem 2rem;">
+                        <div class="kpi-label" id="label-prov-promedio" style="margin-bottom: 0.25rem;">Gasto Promedio p/Emisor</div>
+                        <div class="kpi-value-alt" id="kpi-prov-promedio" style="font-size: 2.25rem; font-weight: 800; color: var(--white); line-height: 1.2;">₡0.00</div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Directorio de Proveedores -->
+                <div class="bento-row">
+                    <div class="bento-card card-white full-width" style="min-height: 620px; display: flex; flex-direction: column;">
+                        <div class="filters-header">
+                            <h2 class="card-title-dark">Directorio de Emisores</h2>
+                            <div class="filters-controls">
+                                <div class="search-box">
+                                    <i data-lucide="search" class="search-icon"></i>
+                                    <input type="text" id="proveedores-search" placeholder="Buscar emisor..." class="filter-input">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="table-container" style="margin-top: 1.5rem; flex: 1; max-height: 480px;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Emisor</th>
+                                        <th class="text-center">Facturas Emitidas</th>
+                                        <th class="text-right">Total Facturado</th>
+                                        <th class="text-right">Total Pendiente</th>
+                                        <th>Última Factura</th>
+                                        <th>Última Fecha</th>
+                                        <th class="text-center">Detalle</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="proveedores-table-body">
+                                    <!-- Inyectado dinámicamente -->
+                                </tbody>
+                            </table>
+                            <div id="proveedores-loading" class="loading">Cargando directorio de proveedores...</div>
+                            <div id="proveedores-empty" class="empty-state hidden">No se encontraron emisores que coincidan con la búsqueda.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="view-reportes" class="view-section hidden">
+                <div class="bento-card card-white full-width">
+                    <h2 class="card-title-dark">Reportes Financieros</h2>
+                    <p style="color:var(--gray); padding: 20px;">En desarrollo para futuras versiones.</p>
+                </div>
+            </div>
+            <div id="view-precios" class="view-section hidden">
+                <div class="bento-card card-white full-width">
+                    <h2 class="card-title-dark">Auditoría e Historial de Precios</h2>
+                    <p style="color:var(--gray); margin-bottom: 1.5rem; font-weight: 500;">Monitorea la inflación de insumos y compara tarifas de proveedores de forma automática.</p>
+                    <div class="filter-row" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <input type="text" id="precios-search" placeholder="Buscar material (ej. varilla)..." class="filter-input" style="flex: 2; min-width: 250px;">
+                        <select id="precios-filter-proveedor" class="filter-input" style="flex: 1; min-width: 180px;">
+                            <option value="TODOS">Todos los proveedores</option>
+                        </select>
+                        <select id="precios-filter-tendencia" class="filter-input" style="flex: 1; min-width: 180px;">
+                            <option value="TODOS">Todas las tendencias</option>
+                            <option value="ALTA">Subieron de costo</option>
+                            <option value="ESTABLE">Estables</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 1.5rem; margin-top: 1.5rem; flex-wrap: wrap; align-items: flex-start;">
+                    <!-- Grid de productos -->
+                    <div style="flex: 3; min-width: 320px; display: flex; flex-direction: column; gap: 1.5rem;">
+                        
+                        <!-- Top Alertas Críticas -->
+                        <div id="precios-alerts-container" class="hidden" style="background: rgba(220, 38, 38, 0.015); border: 1px solid rgba(220, 38, 38, 0.08); padding: 1.25rem; border-radius: 12px; width: 100%;">
+                            <h3 style="font-size: 0.85rem; font-weight: 800; color: var(--status-coral); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; margin-top: 0;">
+                                <i data-lucide="alert-triangle" style="width: 16px; height: 16px; stroke-width: 2.5px;"></i> Peligro de Inflación: Mayor Impacto en Costos
+                            </h3>
+                            <div id="precios-top-alerts-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+                                <!-- Tarjetas Bento de alertas críticas inyectadas por JS -->
+                            </div>
+                        </div>
+
+                        <!-- Catálogo General (Formato Tabla Compacta) -->
+                        <div style="width: 100%;">
+                            <h3 style="font-size: 0.85rem; font-weight: 800; color: var(--charcoal); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; margin-top: 0;">
+                                Catálogo General de Insumos
+                            </h3>
+                            <div id="precios-table-view" class="table-container" style="width: 100%; max-height: 480px; overflow-y: auto; background: #FFFFFF; border-radius: 8px; border: 1px solid var(--gray-100);">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Material / Artículo</th>
+                                            <th>Último Proveedor</th>
+                                            <th class="text-right">Costo Actual</th>
+                                            <th class="text-right">Costo Anterior</th>
+                                            <th class="text-center" style="width: 150px;">Variación</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="precios-table-tbody">
+                                        <!-- Inyectado por JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="precios-empty" class="text-center hidden" style="padding: 3rem; background: var(--card-bg); border-radius: 12px; border: 1px dashed var(--gray-200); width: 100%;">
+                            <i data-lucide="info" style="width: 48px; height: 48px; color: var(--gray-300); margin-bottom: 1rem; display: inline-block;"></i>
+                            <p style="color: var(--gray-500); font-weight: 500;">No se encontraron materiales con los filtros actuales.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Panel lateral de detalle del producto seleccionado (Bento Card) -->
+                    <div id="precios-detail-panel" class="bento-card card-white hidden" style="flex: 2; min-width: 320px; flex-direction: column; gap: 1.25rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--gray-200); padding-bottom: 1rem;">
+                            <h3 id="precios-detail-title" class="card-title-dark" style="margin:0; font-size: 1.25rem;">Detalle del Insumo</h3>
+                            <button id="precios-detail-close" class="icon-btn-dark" style="padding: 0.25rem;"><i data-lucide="x"></i></button>
+                        </div>
+                        
+                        <!-- Tarjeta con detalles del material y proveedores -->
+                        <div id="precios-detail-info-card" style="background: var(--card-bg); border: 1px solid var(--gray-200); padding: 1rem; border-radius: 8px; font-size: 0.85rem;">
+                            <!-- Inyectado por JS -->
+                        </div>
+                        
+                        <!-- Comparador / Recomendación de Proveedor Más Barato -->
+                        <div id="precios-saving-box" style="background: rgba(13, 110, 110, 0.06); border-left: 4px solid var(--teal); padding: 1rem; border-radius: 6px;">
+                            <div style="font-size: 0.8rem; text-transform: uppercase; font-weight: 700; color: var(--teal-dark); margin-bottom: 0.25rem; letter-spacing: 0.05em;">Recomendación de Compra</div>
+                            <div id="precios-saving-text" style="font-size: 0.92rem; font-weight: 600; color: var(--charcoal);">Analizando tarifas de mercado...</div>
+                        </div>
+                        
+
+                        <!-- Línea de tiempo narrativa de compras -->
+                        <div style="margin-top: 0.5rem; width: 100%;">
+                            <h4 style="font-size: 0.82rem; text-transform: uppercase; font-weight: 700; color: var(--gray-400); margin-bottom: 1.25rem; letter-spacing: 0.05em; margin-top: 0;">Línea de Tiempo de Compras</h4>
+                            <div id="precios-timeline-container" style="display: flex; flex-direction: column; gap: 1.5rem; border-left: 2px solid var(--gray-150); padding-left: 1.5rem; margin-left: 0.5rem; position: relative;">
+                                <!-- Nodos narrativos inyectados por JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Modal Visor de Factura -->
+    <div id="invoice-modal" class="modal-overlay hidden">
+        <div class="modal-content bento-card card-white">
+            <div class="modal-header">
+                <h3 class="modal-title">Detalle Factura <span id="modal-factura-num"></span></h3>
+                <div class="modal-actions">
+                    <a id="modal-download-btn" href="#" target="_blank" class="btn-secondary">
+                        <i data-lucide="download"></i> PDF
+                    </a>
+                    <button id="modal-close" class="icon-btn-dark"><i data-lucide="x"></i></button>
+                </div>
+            </div>
+            <div class="modal-body split-pane">
+                <!-- Izquierda: Visor PDF -->
+                <div class="pane-left">
+                    <iframe id="modal-pdf-viewer" src="" frameborder="0"></iframe>
+                </div>
+                <!-- Derecha: Datos extraidos -->
+                <div class="pane-right">
+                    <div class="detail-group">
+                        <label>Proveedor</label>
+                        <div class="detail-value" id="modal-proveedor"></div>
+                    </div>
+                    <div class="detail-group">
+                        <label>Emisión</label>
+                        <div class="detail-value" id="modal-fecha"></div>
+                    </div>
+                    <div id="modal-amounts-container" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <div class="detail-group">
+                            <label>Total</label>
+                            <div class="detail-value highlight-amount" id="modal-total"></div>
+                        </div>
+                    </div>
+                    
+                    <h4 class="lines-title">Productos</h4>
+                    <div class="lines-container">
+                        <table class="lines-table">
+                            <thead>
+                                <tr>
+                                    <th>Cant.</th>
+                                    <th>Descripción</th>
+                                    <th class="text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modal-lines-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Facturas por Proveedor -->
+    <div id="provider-invoices-modal" class="modal-overlay hidden">
+        <div class="modal-content bento-card card-white" style="max-width: 900px; height: auto; max-height: 85vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="flex-direction: column; align-items: flex-start; gap: 0.5rem; padding: 1.5rem 2rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <h3 class="modal-title" style="font-weight: 700; margin: 0;">Facturas de <span id="provider-modal-name" style="color: var(--teal-dark);"></span></h3>
+                    <button id="provider-modal-close" class="icon-btn-dark"><i data-lucide="x"></i></button>
+                </div>
+                <div id="provider-modal-total-spent" style="font-size: 0.95rem; font-weight: 600; color: var(--gray-500); display: flex; gap: 1.5rem; flex-wrap: wrap; margin-top: 0.25rem;">
+                    <div>Total Facturado: <span id="provider-total-amount" style="color: var(--charcoal); font-weight: 800;">₡0.00</span></div>
+                    <div>Saldo Pendiente: <span id="provider-pending-amount" style="color: var(--status-coral); font-weight: 800;">₡0.00</span></div>
+                </div>
+            </div>
+            <div class="modal-body" style="padding: 1rem 2rem 2rem; overflow-y: auto; display: block; flex: 1;">
+                <div class="table-container" style="max-height: 480px;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Factura</th>
+                                <th>Fecha Emisión</th>
+                                <th>Vencimiento</th>
+                                <th class="text-right">Monto</th>
+                                <th class="text-center">Estado</th>
+                                <th class="text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="provider-modal-table-body">
+                            <!-- Filas inyectadas dinámicamente -->
+                        </tbody>
+                    </table>
+                    <div id="provider-modal-empty" class="empty-state hidden" style="padding: 2rem; text-align: center; color: var(--gray-500);">
+                        No hay facturas registradas para este emisor.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Confirm Modal -->
+    <div id="confirm-modal" class="modal-overlay hidden">
+        <div class="confirm-box bento-card card-white">
+            <h3 class="confirm-title">Confirmar Acción</h3>
+            <p id="confirm-message" class="confirm-text">¿Deseas realizar esta acción?</p>
+            <div class="confirm-actions">
+                <button id="confirm-cancel-btn" class="btn-secondary">Cancelar</button>
+                <button id="confirm-accept-btn" class="btn-primary">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot Widget Flotante (Drawer Lateral Derecho) -->
+    <div id="nautilus-chat-container" class="hidden">
+        <!-- Botón CTA pill flotante derecho -->
+        <button id="chat-bubble" class="asistente-cta-btn" title="Abrir Asistente Nautilus">
+            <div class="nautilus-icon-wrap">
+                <i data-lucide="bot-message-square" style="width:20px;height:20px;color:white;"></i>
+            </div>
+            <div class="asistente-cta-text">
+                <strong>Asistente Nautilus</strong>
+                <span>Consulta tus finanzas con IA</span>
+            </div>
+            <i data-lucide="chevron-left" style="width:20px;height:20px;opacity:0.7;"></i>
+        </button>
+
+        <!-- Panel de chat lateral derecho esmerilado -->
+        <div id="chat-panel" class="chat-panel-box hidden">
+            <div class="chat-header">
+                <div class="chat-header-info">
+                    <div class="chat-header-avatar">
+                        <i data-lucide="bot-message-square" style="width:18px;height:18px;color:white;"></i>
+                    </div>
+                    <div>
+                        <h4 class="chat-title">Asistente Nautilus</h4>
+                        <span class="chat-status">desarrollado por nautilus</span>
+                    </div>
+                </div>
+                <button id="chat-close-btn" class="chat-close-btn" title="Cerrar chat">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            
+            <!-- Caja de mensajes scrollable -->
+            <div id="chat-messages-container" class="chat-messages">
+                <!-- Mensaje de bienvenida inicial -->
+                <div class="message message-bot">
+                    <div class="message-content">
+                        ¡Hola! Soy tu asistente de finanzas, desarrollado por Nautilus. Puedo responder preguntas sobre tus facturas, proveedores o estados de cuenta. ¿Qué deseas analizar hoy?
+                    </div>
+                </div>
+            </div>
+
+            <!-- Entrada de texto -->
+            <form id="chat-input-form" class="chat-input-area">
+                <input type="text" id="chat-input-text" placeholder="Escribe tu consulta..." autocomplete="off" required>
+                <button type="submit" id="chat-send-btn" class="chat-send-btn" title="Enviar mensaje">
+                    <i data-lucide="send"></i>
+            </form>
+            <script>
+                document.getElementById('chat-bubble').onclick = function() {
+                    var panel = document.getElementById('chat-panel');
+                    var main = document.querySelector('.main-content');
+                    panel.classList.toggle('hidden');
+                    if (main) {
+                        if (!panel.classList.contains('hidden')) {
+                            main.classList.add('chat-open');
+                        } else {
+                            main.classList.remove('chat-open');
+                        }
+                    }
+                    if (typeof renderTrendChart === 'function') renderTrendChart();
+                };
+                document.getElementById('chat-close-btn').onclick = function() {
+                    var panel = document.getElementById('chat-panel');
+                    var main = document.querySelector('.main-content');
+                    panel.classList.add('hidden');
+                    if (main) main.classList.remove('chat-open');
+                    if (typeof renderTrendChart === 'function') renderTrendChart();
+                };
+            </script>
+        </div>
+    </div>
+
+    <!-- Modal: Generar Links de Invitación con Permisos Granulares -->
+    <div id="modal-generar-links" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i data-lucide="key" style="color: #38bdf8; width: 22px; height: 22px;"></i>
+                    <h3 style="margin: 0; color: #ffffff; font-size: 18px; font-weight: 700; letter-spacing: 0.5px;">Generar Enlace de Invitación</h3>
+                </div>
+                <button type="button" id="btn-close-links-modal" class="icon-btn-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: #94a3b8; font-size: 13.5px; margin-bottom: 20px; text-align: left; line-height: 1.4;">
+                    Crea un acceso personalizado. Selecciona las casillas de las funciones de Nautilus a las que tendrá acceso la persona.
+                </p>
+                <form id="form-generar-link">
+                    <div class="input-group">
+                        <label>Nombre / Etiqueta del Enlace</label>
+                        <input type="text" id="link-etiqueta" placeholder="Ej. Contador / Auxiliar / Chofer" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Usos Permitidos del Enlace</label>
+                        <select id="link-max-usos" class="modal-select">
+                            <option value="1">1 solo uso (Recomendado)</option>
+                            <option value="5">5 usos (Pequeño equipo)</option>
+                            <option value="10">10 usos (Equipo mediano)</option>
+                            <option value="999">Usos Ilimitados</option>
+                        </select>
+                    </div>
+
+                    <label style="color: #e2e8f0; font-size: 14px; font-weight: 600; margin-top: 4px; display: block; text-align: left;">
+                        Selecciona los permisos autorizados:
+                    </label>
+
+                    <div class="permissions-grid">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="perm-ver-dashboard">
+                            <i data-lucide="layout-dashboard" class="perm-icon"></i>
+                            <span>Ver Dashboard Principal (KPIs y Gráficos)</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="perm-ver-facturas">
+                            <i data-lucide="file-text" class="perm-icon"></i>
+                            <span>Ver Historial Completo de Facturas</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="perm-descargar-files">
+                            <i data-lucide="download" class="perm-icon"></i>
+                            <span>Descargar Archivos PDF y XML de Facturas</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="perm-ver-proveedores">
+                            <i data-lucide="users" class="perm-icon"></i>
+                            <span>Ver Módulo y Lista de Proveedores</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="perm-ver-precios">
+                            <i data-lucide="trending-up" class="perm-icon"></i>
+                            <span>Ver Historial de Precios e Insumos</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="perm-exportar-reportes">
+                            <i data-lucide="bar-chart-2" class="perm-icon"></i>
+                            <span>Exportar Reportes Fiscales y Estadísticas</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="perm-consultar-ia">
+                            <i data-lucide="bot-message-square" class="perm-icon"></i>
+                            <span>Consultar Asistente de IA (Chatbot)</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="perm-generar-links">
+                            <i data-lucide="key" class="perm-icon"></i>
+                            <span>Generar Nuevos Enlaces de Invitación</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="perm-subir-telegram">
+                            <i data-lucide="send" class="perm-icon"></i>
+                            <span>Subir Comprobantes por Telegram</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" id="btn-submit-generar-link" class="btn-gradient" style="margin-top: 10px;">
+                        Generar Enlace Único
+                    </button>
+                </form>
+
+                <!-- Resultado de los Enlaces Generados -->
+                <div id="link-result-container" class="hidden" style="margin-top: 20px; text-align: left;">
+                    <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; border-radius: 12px; padding: 12px; margin-bottom: 16px;">
+                        <span style="color: #10b981; font-weight: 700; font-size: 14px;">✓ Enlace Creado Exitosamente</span>
+                    </div>
+
+                    <label style="color: #cbd5e1; font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px;">1️⃣ Enlace Web Onboarding (Para la persona):</label>
+                    <div class="copy-box" style="margin-bottom: 14px;">
+                        <input type="text" id="res-link-web" readonly>
+                        <button type="button" id="btn-copy-web-link" class="btn-primary" style="padding: 8px 14px; font-size: 12px;">Copiar</button>
+                    </div>
+
+                    <label style="color: #cbd5e1; font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px;">2️⃣ Enlace Telegram Bot (Para celulares):</label>
+                    <div class="copy-box">
+                        <input type="text" id="res-link-telegram" readonly>
+                        <button type="button" id="btn-copy-telegram-link" class="btn-primary" style="padding: 8px 14px; font-size: 12px;">Copiar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <!-- Script Principal Dashboard Bot Facturas -->
+    <script src="app.js?v=20260816_v203"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
